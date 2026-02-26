@@ -1,190 +1,229 @@
-# Simulación tipo Spotify con Cola (FIFO) hecha desde cero (Java + Maven)
+# 🎵 Spotify Simulation using Custom Queue (FIFO)
 
-Repositorio con **dos proyectos Maven**:
+## 📌 Descripción del Proyecto
 
-- `umg.edu.gt.data-structure.queue/` → **Librería** (Parte A): implementación manual de una Cola genérica `Queue<T>` usando nodos enlazados.
-- `queueHandler/` → **Aplicación** (Parte B/C/D): simulación de reproducción tipo Spotify que **consume la librería** y agrega prioridad + extensiones.
+Este proyecto implementa una simulación tipo Spotify utilizando una estructura de datos **Cola (FIFO)** desarrollada completamente desde cero en Java.
 
-Estructura mínima solicitada:
+El sistema fue desarrollado con arquitectura modular utilizando **Maven**, separando:
 
-```
-/umg.edu.gt.data-structure.queue
-/queueHandler
-/README.md
-/evidencias
-```
+- 📦 Librería de estructura de datos
+- 🎧 Proyecto consumidor (simulación de reproducción)
+
+No se utilizan estructuras del JDK como `Queue`, `LinkedList`, `ArrayDeque` ni `PriorityQueue`.
 
 ---
 
-## ✅ Requisitos
+# 🏗 Arquitectura del Repositorio
 
-- Java 8 o superior
-- Maven
-- **No** se usa `Queue`, `LinkedList`, `ArrayDeque` ni otras estructuras del JDK para la cola.
-- **No** se usan librerías externas de logging (se implementa `Logger` propio).
+/umg.edu.gt.data-structure.queue  
+/queueHandler  
+/README.md  
+/evidencias  
 
 ---
 
-## 🧱 Parte A — Librería de Cola Propia
+# 🧱 Parte A — Librería de Cola Propia
 
-**Proyecto:** `umg.edu.gt.data-structure.queue`
+Proyecto:
 
-### Diseño
+umg.edu.gt.data-structure.queue
 
-- `Queue<T>` (interfaz): define `enqueue`, `dequeue`, `peek`, `isEmpty`, `size`.
-- `LinkedQueue<T>`: implementación **FIFO** con nodos enlazados.
-- `Node<T>`: nodo genérico enlazado (no se expone fuera del paquete).
-- `QueueEmptyException`: **excepción controlada** para `dequeue()`/`peek()` en cola vacía.
+## 🔹 Implementación
 
-### Complejidad
+Se implementó una cola genérica:
 
-- `enqueue` → **O(1)** (se inserta directo en `tail`)
-- `dequeue` → **O(1)** (se remueve directo de `head`)
-- Se maneja correctamente cuando la cola queda vacía (`head == null` ⇒ `tail = null`).
+Queue<T>
 
-### Compilar e instalar en local
+Basada en:
 
-Dentro de `umg.edu.gt.data-structure.queue/`:
+- Clase interna `Node<T>`
+- Referencias privadas `head` y `tail`
+- Variable interna `size`
+- Encapsulamiento completo
 
-```bash
+## 🔹 Métodos implementados
+
+- `enqueue(T item)` → O(1)
+- `dequeue()` → O(1)
+- `peek()`
+- `isEmpty()`
+- `size()`
+
+## 🔹 Decisiones Técnicas
+
+- `enqueue()` es O(1) porque se inserta directamente en `tail`.
+- `dequeue()` es O(1) porque se elimina directamente desde `head`.
+- Cuando la cola queda vacía se asigna `head = null` y `tail = null`.
+- Se lanza una excepción controlada si se hace `dequeue()` en una cola vacía.
+- No se exponen nodos internos.
+
+---
+
+# ⚙ Cómo Compilar la Librería
+
+Desde la carpeta:
+
+umg.edu.gt.data-structure.queue
+
+Ejecutar:
+
 mvn clean install
-```
 
-Esto instala el JAR en tu repositorio local (`~/.m2`) para que el proyecto consumidor pueda compilar.
+Esto instala la librería en el repositorio local (`.m2`).
 
 ---
 
-## 🎵 Parte B — Simulación de reproducción (reproductor tipo Spotify)
+# 🎵 Parte B — Simulación de Reproducción
 
-**Proyecto:** `queueHandler`
+Proyecto:
 
-### Modelo obligatorio
+queueHandler
 
-Clase `Song` con:
+Este proyecto consume la librería personalizada.
+
+## 🔹 Modelo Song
+
+Cada canción contiene:
 
 - `title`
 - `artist`
-- `duration` (5 a 30 segundos)
+- `duration` (entre 5 y 30 segundos)
 - `priority` (1 = alta, 2 = normal)
 
-Las duraciones **varían** (se generan aleatoriamente entre 5 y 30).
-
-### Logs y reproducción segundo a segundo (OBLIGATORIO)
-
-- Inicio: `Starting playlist...`
-- Al reproducir: `Now playing: ...`
-- Progreso **cada segundo** con `Thread.sleep(1000)`
-- Final: `Finished: ...`
-- Al terminar: `Playlist finished.`
-
-**Logging:** se implementa `Logger` propio (sin log4j, sin slf4j).
+Las duraciones varían para simular comportamiento real.
 
 ---
 
-## 🔥 Parte C — Sistema de Prioridad
+# ▶️ Simulación Realista
 
-Estrategia usada: **dos colas internas**:
+La reproducción se realiza segundo a segundo usando:
 
-- Cola alta (`priority = 1`)
-- Cola normal (`priority = 2`)
+Thread.sleep(1000)
 
-Reglas:
+Comportamiento implementado:
 
-- Siempre se reproduce primero la cola alta.
-- **Dentro de cada cola se respeta FIFO**.
+- `[LOG] Starting playlist...`
+- `[LOG] Now playing: ...`
+- Progreso por segundo:
+  `[LOG] Playing: Song | 5s / 12s`
+- Barra visual de progreso:
+  `[#####-----] 5s / 10s`
+- `[LOG] Finished: ...`
+- `[LOG] Playlist finished.`
+
+No se utilizan librerías externas de logging.
+
+---
+
+# 🔥 Parte C — Sistema de Prioridad
+
+Para implementar prioridad sin usar `PriorityQueue`, se utilizaron:
+
+- Una cola para prioridad alta
+- Una cola para prioridad normal
+
+### Funcionamiento:
+
+1. Primero se reproducen todas las canciones de prioridad 1.
+2. Luego se reproducen las de prioridad 2.
+3. Dentro de cada prioridad se respeta FIFO.
 
 Ejemplo:
 
-Alta: `A1, A2`  
-Normal: `N1, N2, N3`  
-Salida: `A1, A2, N1, N2, N3`
+Alta:
+A1, A2
+
+Normal:
+N1, N2, N3
+
+Salida:
+A1, A2, N1, N2, N3
 
 ---
 
-## 🚀 Parte D — Extensiones implementadas (4)
+# 🚀 Parte D — Extensiones Implementadas
 
-Se implementaron **más de 2**:
+Se implementaron las siguientes mejoras:
 
-1. **Historial** de canciones reproducidas (estructura propia `SongHistory`, lista enlazada simple).
-2. **Contador total** de canciones reproducidas.
-3. **Tiempo total acumulado** reproducido (segundos).
-4. **Barra de progreso visual**:
-
-   ```
-   [#####---------------] 5s / 20s
-   ```
-
-5. **Validación anti-duplicados** (estructura propia `DuplicateGuard` con arreglo dinámico).
+- ✅ Historial de canciones reproducidas
+- ✅ Contador total de canciones reproducidas
+- ✅ Tiempo total acumulado reproducido
+- ✅ Barra de progreso visual
+- ✅ Validación para evitar canciones duplicadas
 
 ---
 
-## 🧪 Cómo compilar el handler
+# 📦 Cómo Compilar el Handler
 
-> Importante: primero instala la librería (Parte A).
+Desde la carpeta:
 
-Dentro de `queueHandler/`:
+queueHandler
 
-```bash
+Ejecutar:
+
 mvn clean package
-```
-
-Se genera un JAR ejecutable con dependencias:
-
-- `target/queueHandler-1.0.0-jar-with-dependencies.jar`
 
 ---
 
-## ▶️ Cómo ejecutar desde consola
+# ▶️ Cómo Ejecutar Desde Consola
 
-Dentro de `queueHandler/`:
+Dentro de:
 
-```bash
+queueHandler
+
+Ejecutar:
+
 java -jar target/queueHandler-1.0.0-jar-with-dependencies.jar
-```
+
+El sistema ejecutará la simulación completa mostrando:
+
+- Logs detallados
+- Progreso segundo a segundo
+- Sistema de prioridad funcionando
+- Historial final
 
 ---
 
-## 📸 Evidencias
+# 🧠 Explicación del Diseño
 
-Carpeta: `evidencias/`
+Se optó por una arquitectura modular para separar responsabilidades:
 
-Incluye archivos de texto con salidas de ejemplo.  
-Si tu profesor pide **capturas**, ejecuta los comandos en tu PC y toma screenshots de:
+- La librería contiene exclusivamente la implementación de la estructura de datos.
+- El handler contiene la lógica de negocio y simulación.
 
-- `mvn clean install` (librería)
-- `mvn clean package` (handler)
-- ejecución del `java -jar ...`
-- logs con reproducción segundo a segundo
-- prioridad funcionando (A1, A2 antes que N1, N2, N3)
+Esto permite reutilización de la estructura de datos en otros proyectos.
+
+La prioridad se resolvió utilizando dos colas internas para mantener O(1) en las operaciones y respetar FIFO sin romper el diseño original.
+
+La simulación usa pausas reales con `Thread.sleep` para garantizar una experiencia realista.
+
+---
+
+# 📸 Evidencias
+
+La carpeta `evidencias/` incluye capturas de:
+
+- Instalación de la librería
+- Compilación del handler
+- Ejecución completa desde consola
+- Reproducción segundo a segundo
+- Sistema de prioridad funcionando
 
 ---
 
-## 📌 Nota de aprendizaje (explicación sin código)
+# 🛠 Requisitos
 
-**Cómo se logró O(1) en enqueue/dequeue:**
-
-- Se guardan **dos referencias**:
-  - `head`: primer nodo (el que sale primero)
-  - `tail`: último nodo (donde se inserta)
-- **enqueue**: se conecta `tail.next` al nuevo nodo y se actualiza `tail`.
-- **dequeue**: se avanza `head = head.next`.
-- Si después de sacar un elemento `head` queda `null`, entonces la cola está vacía y también `tail` se vuelve `null`.
-- `size` se incrementa/disminuye para saber rápido cuántos elementos hay.
-
-**Cómo se implementó la prioridad sin romper FIFO:**
-
-- Se usan **dos colas**:
-  - Una para prioridad 1
-  - Una para prioridad 2
-- Siempre se intenta sacar (`dequeue`) de la cola de prioridad 1.
-- Cuando la cola 1 está vacía, se comienza a sacar de la cola 2.
-- Cada cola por separado mantiene FIFO.
-
-**Cómo se simuló la reproducción realista:**
-
-- Para cada canción se recorre `segundo = 1..duration`
-- En cada segundo:
-  - Se imprime un log con el progreso
-  - Se espera exactamente 1 segundo con `Thread.sleep(1000)`
+- Java 8 o superior
+- Maven
 
 ---
+
+# ✅ Estado del Proyecto
+
+✔ Compila correctamente  
+✔ Ejecuta desde consola  
+✔ Implementa FIFO manual  
+✔ Soporta prioridad  
+✔ Simulación realista  
+✔ Logs detallados  
+✔ Arquitectura modular Maven  
